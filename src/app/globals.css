@@ -201,3 +201,37 @@
     scroll-behavior: auto !important;
   }
 }
+
+@keyframes theme-icon-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Header hairline: flush with the hero until the page scrolls, then a
+   rule separates it from content. CSS-only (scroll-driven animation) so
+   the header stays a Server Component — no scroll-listener client code. */
+.site-header {
+  border-bottom: 1px solid var(--color-rule);
+}
+
+@supports (animation-timeline: scroll()) {
+  .site-header {
+    border-bottom-color: transparent;
+    animation: reveal-hairline linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 48px;
+  }
+}
+
+@keyframes reveal-hairline {
+  from {
+    border-bottom-color: transparent;
+  }
+  to {
+    border-bottom-color: var(--color-rule);
+  }
+}
