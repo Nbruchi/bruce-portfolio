@@ -57,9 +57,10 @@ Web dashboard and mobile dashboard remain the hero shots for the case study head
 |---|---|---|
 | 1 | Course view with gated progression — locked and unlocked states both visible in one frame | The single most important shot: it is his work and the platform's spine |
 | 2 | Sub-module quiz, mid-attempt or on the results state | His work, and it shows the assessment layer |
-| 3 | Language switcher open, or the same page rendered in English and Kinyarwanda side by side | Proves the i18n work concretely — a before/after pair is more persuasive than a dropdown |
-| 4 | Dark theme — the same view in both themes | His contribution, and it doubles as evidence of UI work |
-| 5 | One engagement email (reminder or top-performer reward) as rendered in an inbox | Email systems are invisible in app screenshots; this is the only way that work shows |
+| 3 | Dark theme — the same view in both themes | His contribution, and it doubles as evidence of UI work |
+| 4 | One engagement email (reminder or top-performer reward) as rendered in an inbox | Email systems are invisible in app screenshots; this is the only way that work shows |
+
+**Dropped:** language switcher / English-Kinyarwanda side-by-side — i18n work is still in progress, not ready to show.
 
 **Never capture:** the code editor / challenge runner, challenge problem pages, auth screens.
 
