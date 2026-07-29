@@ -38,7 +38,7 @@ A component writes `bg-surface text-text-primary`. It never writes `bg-paper`, n
   --paper-raised: #F7F6F4;
   --plum:         #221A29;  /* deep plum-black */
   --plum-soft:    #574B5E;
-  --gold:         #A8792B;  /* ochre gold */
+  --gold:         #8A6323;  /* ochre gold, darkened from an earlier #A8792B — see contrast note below */
   --gold-wash:    #EFE4CD;
   --rule-light:   #D6D2CA;
   --green:        #4A6B55;
@@ -98,7 +98,9 @@ A component writes `bg-surface text-text-primary`. It never writes `bg-paper`, n
 |---|---|---|
 | `--text-primary` on `--surface` | ≈14:1 | ≈15:1 |
 | `--text-secondary` on `--surface` | ≈7:1 | ≈7:1 |
-| `--accent` on `--surface` | ≈4.6:1 — links and large text only, **never** small secondary text | ≈8:1 |
+| `--accent` on `--surface` | ≈4.65:1 — clears AA at body text size | ≈8:1 |
+
+**Contrast correction:** the light-mode gold originally specified here (`#A8792B`) measured 3.33:1 against `--surface` — short of the ~4.6:1 this table always claimed, and short of WCAG AA (4.5:1) for the inline-prose links `ui-rules.md` specs at body text size. Verified with Playwright during feature 02; darkened to `#8A6323` (same hue/saturation, lower lightness), which measures 4.65:1 — matching the ratio this doc already claimed, so likely the originally intended value.
 
 ## Typography
 
