@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Archivo, Fraunces, IBM_Plex_Mono } from "next/font/google";
+import { Footer } from "@/components/layout/Footer";
+import { Header } from "@/components/layout/Header";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -22,8 +24,23 @@ const ibmPlexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const SET_THEME_SCRIPT = `(function(){try{var s=localStorage.getItem("theme");var d=s==="dark"||(s!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.add(d?"dark":"light")}catch(e){}})()`;
+
 export const metadata: Metadata = {
-  title: "Bruce Nkundabagenzi",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
+  title: {
+    default: "Bruce Nkundabagenzi — Software engineer",
+    template: "%s — Bruce Nkundabagenzi",
+  },
+  description:
+    "Sole engineer on a restaurant platform with real-time fiscal compliance, double-entry accounting, and multi-channel payments — full-stack, web and mobile.",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#efeeeb" },
+    { media: "(prefers-color-scheme: dark)", color: "#161219" },
+  ],
 };
 
 export default function RootLayout({
@@ -34,9 +51,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${fraunces.variable} ${archivo.variable} ${ibmPlexMono.variable}`}
     >
-      <body>{children}</body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SET_THEME_SCRIPT }} />
+      </head>
+      <body>
+        <Header />
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }

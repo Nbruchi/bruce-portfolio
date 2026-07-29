@@ -136,6 +136,16 @@ Date and reading time in mono; title in Archivo 500, `--text-primary`; whole row
 
 ---
 
+## About Page
+
+- One headshot on the entire site, and this is its only placement — never in the header, hero, or as a favicon/OG default. The identity is the Ledger, not a personal brand photo; one small, well-placed exception alongside the "human paragraph" (see `content-spec.md`) supports the humanizing goal without competing with it.
+- Treatment matches the site's existing image chrome (`ui-tokens.md`'s no-shadow rule): `--radius-lg`, `1px solid --rule`, no CSS filter, no grayscale — real color, presented plainly, the same restraint applied to case-study screenshots
+- Size: small and fixed, roughly 140–160px square on desktop (`next/image` with explicit width/height per `code-standards.md`) — a portrait accent next to a paragraph, not a hero banner
+- Layout: sits beside the human paragraph on desktop (image left or right, text wraps or sits in a flex row), stacks above it on mobile
+- Alt text: the real name (`"Bruce Nkundabagenzi"`), not "headshot" or "photo of the author"
+
+---
+
 ## Empty and Failure States
 
 - Writing index with no posts: a single line — `First post is being written.` Never ship a "coming soon" card with a placeholder illustration

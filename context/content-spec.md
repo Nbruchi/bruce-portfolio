@@ -135,6 +135,8 @@ Every post: date, reading time, and a real conclusion. No "in this article we wi
 
 Adapt the About narrative already drafted in `positioning-draft.md` (sole-engineer framing, "I had no safety net, so I built one," WithinTech remote-team paragraph, SubTrack and the AI-workflow story). Add: how you got into engineering, what you're learning now, and one non-work paragraph — the reader is deciding whether they want to work with a person, and a page with zero humanity is its own kind of red flag.
 
+A small headshot (`/bruce-image.jpg`) runs alongside the human paragraph — real alt text (`"Bruce Nkundabagenzi"`), no filter or decorative crop. Layout and image chrome are specced in `ui-rules.md`. It appears here only, never in the header or hero — see `ui-rules.md` for why.
+
 ---
 
 ## Metadata (every page)
