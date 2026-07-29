@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 
 type Theme = "system" | "light" | "dark";
+
+const THEME_EVENT = "themechange";
 
 const NEXT_THEME: Record<Theme, Theme> = {
   system: "light",
@@ -24,9 +26,26 @@ const ICON: Record<Theme, typeof Monitor> = {
 };
 
 function getStoredTheme(): Theme {
-  if (typeof window === "undefined") return "system";
   const stored = window.localStorage.getItem("theme");
   return stored === "light" || stored === "dark" ? stored : "system";
+}
+
+// The server can't know localStorage, so it always renders "system" — the
+// correct default for a fresh visitor anyway. useSyncExternalStore is the
+// React-sanctioned way to reconcile that with a real client-only value
+// without a hydration mismatch (unlike a lazy useState initializer, which
+// would crash hydration the moment the stored value disagreed).
+function getServerSnapshot(): Theme {
+  return "system";
+}
+
+function subscribeTheme(callback: () => void) {
+  window.addEventListener(THEME_EVENT, callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener(THEME_EVENT, callback);
+    window.removeEventListener("storage", callback);
+  };
 }
 
 function applyTheme(theme: Theme): void {
@@ -40,10 +59,11 @@ function applyTheme(theme: Theme): void {
     window.localStorage.setItem("theme", theme);
     root.classList.add(theme);
   }
+  window.dispatchEvent(new Event(THEME_EVENT));
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(getStoredTheme);
+  const theme = useSyncExternalStore(subscribeTheme, getStoredTheme, getServerSnapshot);
 
   useEffect(() => {
     if (theme !== "system") return;
@@ -56,28 +76,17 @@ export function ThemeToggle() {
   const next = NEXT_THEME[theme];
   const Icon = ICON[theme];
 
-  function handleClick() {
-    applyTheme(next);
-    setTheme(next);
-  }
-
   return (
     <button
       type="button"
-      onClick={handleClick}
+      onClick={() => applyTheme(next)}
       aria-label={`Theme: ${theme}. Switch to ${next}.`}
       className="flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-md border border-rule text-text-secondary transition-colors duration-150 hover:border-accent hover:bg-accent-wash sm:w-28"
     >
-      <span
-        key={theme}
-        suppressHydrationWarning
-        className="animate-[theme-icon-in_150ms_var(--ease-out)] text-accent"
-      >
+      <span key={theme} className="animate-[theme-icon-in_150ms_var(--ease-out)] text-accent">
         <Icon size={16} aria-hidden="true" />
       </span>
-      <span suppressHydrationWarning className="hidden font-mono text-mono uppercase sm:inline">
-        {LABEL[theme]}
-      </span>
+      <span className="hidden font-mono text-mono uppercase sm:inline">{LABEL[theme]}</span>
     </button>
   );
 }
