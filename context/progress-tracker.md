@@ -7,8 +7,8 @@ Update after every completed feature. Anyone (or any agent) reading this should 
 ## Current Status
 
 **Phase:** Phase 1 — Foundation
-**Last completed:** 01 Project Setup
-**Next:** 02 Design System Foundation
+**Last completed:** 02 Design System Foundation
+**Next:** 03 Layout Shell + Theme Toggle
 
 ---
 
@@ -16,7 +16,7 @@ Update after every completed feature. Anyone (or any agent) reading this should 
 
 ### Phase 1 — Foundation
 - [x] 01 Project Setup
-- [ ] 02 Design System Foundation
+- [x] 02 Design System Foundation
 - [ ] 03 Layout Shell
 
 ### Phase 2 — Content Pipeline
@@ -79,6 +79,8 @@ Blocking content, not code. Resolve before the features that need them.
 - **Themes are a designed pair, not an inversion** — dark is warm plum-shifted (never neutral black), gold lifts to `#D4A24C` for contrast, and the feature section inverts in opposite directions per theme (darker on light, lighter on dark) through one semantic token
 - **Launch at feature 12, not feature 16** — the job search starts when the link works
 - **`next.config.ts` sets `output: "export"` and `images.unoptimized: true` from feature 01, not deferred to launch** — static export disables Next's Image Optimization server outright, so leaving `next/image` on its default loader would build clean now and fail the moment `output: "export"` is added later. Setting both together at project setup means every subsequent feature is developed against the real static-export constraint
+- **`playwright` (core library) added as a dev dependency** — lets an agent drive a real Chromium instance for the visual/contrast/keyboard/reduced-motion checks each feature's verify step calls for, instead of relying on the human to eyeball every pass. Recorded in `architecture.md`'s Dependency Policy; ad-hoc scripts only, no committed test suite
+- **Light-mode `--gold` corrected from `#A8792B` to `#8A6323`** — found during feature 02's Playwright verification: the original value measured 3.33:1 against `--surface`, short of the ~4.6:1 `ui-tokens.md`'s own contrast table always claimed and short of WCAG AA (4.5:1) for the inline-prose links `ui-rules.md` specs at body text size. `#8A6323` (same hue/saturation, darker) measures 4.65:1, matching the ratio the doc already claimed — likely the originally intended value. Updated in both `ui-tokens.md` and `globals.css` in the same pass
 
 ---
 
@@ -88,3 +90,4 @@ Blocking content, not code. Resolve before the features that need them.
 - `profile-facts.md` added as the single source of truth for personal facts; `content-spec.md`, `project-overview.md`, `architecture.md`, and `build-plan.md` updated to reference it and to drop the employer's internal system name (client cannot be named — the case study slug is `restaurant-saas`)
 - `git-workflow.md` is carried over from SubTrack with only the project name changed; conventions are identical
 - Dark mode was added to the plan after the first draft of these docs; `ui-tokens.md` (color system), `ui-rules.md` (toggle, dark-mode screenshots), `architecture.md` (flash prevention, no-JS fallback), `build-plan.md` (features 02/03/12), and `code-standards.md` (semantic-token rule, both-themes verification) were all updated in the same pass — no doc left describing a single-theme site
+- **02 Design System Foundation:** both palettes, semantic layer, Tailwind v4 `@custom-variant dark` wiring, type scale, spacing/radius/motion tokens, fonts (Fraunces w/ SOFT+WONK axes, Archivo, IBM Plex Mono via `next/font/google`), base element styles, focus ring, reduced-motion block, and the no-JS `@media (prefers-color-scheme: dark)` fallback all landed in `globals.css` + `layout.tsx`. The no-JS fallback selector is `:root:not(.light):not(.dark)` rather than the simpler `:not(.dark)` — feature 03's inline theme script must add an explicit `.light` class when the resolved theme is light (not just omit `.dark`), otherwise a manual "light" override on a dark-OS device would be clobbered by the fallback media query. Verified with Playwright (see decision above) rather than manual screenshots — contrast, keyboard focus, 320px overflow, and reduced-motion all confirmed in both themes; scratch page and script deleted after

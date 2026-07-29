@@ -1,1 +1,203 @@
 @import "tailwindcss";
+
+/* Manual dark mode: `.dark` on <html> beats the OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Fonts (variables populated by next/font in layout.tsx) */
+  --font-display: var(--font-fraunces), serif;
+  --font-body: var(--font-archivo), sans-serif;
+  --font-mono: var(--font-plex-mono), monospace;
+
+  /* Type scale — fluid, capped. Weight/line-height/letter-spacing travel with the size. */
+  --text-hero: clamp(2.5rem, 6vw, 4.5rem);
+  --text-hero--line-height: 1.05;
+  --text-hero--letter-spacing: -0.02em;
+  --text-hero--font-weight: 600;
+
+  --text-h2: clamp(1.75rem, 3vw, 2.5rem);
+  --text-h2--line-height: 1.15;
+  --text-h2--font-weight: 600;
+
+  --text-h3: clamp(1.25rem, 2vw, 1.5rem);
+  --text-h3--line-height: 1.25;
+  --text-h3--font-weight: 500;
+
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.65;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.6;
+
+  --text-small: 0.875rem;
+
+  --text-mono: 0.8125rem;
+  --text-mono--letter-spacing: 0.04em;
+
+  /* Named spacing roles, on top of Tailwind's default scale */
+  --spacing-gutter: clamp(1.25rem, 5vw, 3rem);
+  --spacing-section-gap: clamp(4rem, 10vw, 8rem);
+
+  /* Max-width roles */
+  --container-content: 72rem;
+  --container-prose: 44rem;
+
+  /* Radius — small but present, never zero, never a pill */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* Motion easings (durations use Tailwind's numeric duration-* utilities: 100/150/250/400) */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Semantic color layer — references the runtime CSS variables below so
+   utilities stay bound to the variable (not its build-time value) and
+   follow the `.dark` class at runtime. */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-feature: var(--surface-feature);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-on-feature: var(--text-on-feature);
+  --color-accent: var(--accent);
+  --color-accent-wash: var(--accent-wash);
+  --color-rule: var(--rule);
+  --color-status-balance: var(--status-balance);
+  --color-surface-code: var(--surface-code);
+}
+
+:root {
+  color-scheme: light dark;
+
+  /* Layer 1 — raw palette (light). Referenced only in this file. */
+  --paper: #efeeeb;
+  --paper-raised: #f7f6f4;
+  --plum: #221a29;
+  --plum-soft: #574b5e;
+  --gold: #8a6323; /* darkened from an earlier #a8792b, see ui-tokens.md's contrast note */
+  --gold-wash: #efe4cd;
+  --rule-light: #d6d2ca;
+  --green: #4a6b55;
+
+  /* Layer 2 — semantic tokens (light, the default) */
+  --surface: var(--paper);
+  --surface-raised: var(--paper-raised);
+  --surface-feature: var(--plum);
+  --text-primary: var(--plum);
+  --text-secondary: var(--plum-soft);
+  --text-on-feature: var(--paper);
+  --accent: var(--gold);
+  --accent-wash: var(--gold-wash);
+  --rule: var(--rule-light);
+  --status-balance: var(--green);
+  --surface-code: #1f1a24; /* theme-stable, see ui-rules.md */
+}
+
+:root.dark {
+  /* Layer 1 — raw palette (dark). Warmer, plum-shifted — never neutral black. */
+  --ink: #161219;
+  --ink-raised: #1f1a24;
+  --ink-feature: #2a2331;
+  --bone: #ede9e4;
+  --bone-soft: #a79dae;
+  --gold-lit: #d4a24c;
+  --gold-ember: #3a2e1c;
+  --rule-dark: #332c3a;
+  --green-lit: #7fa98b;
+
+  /* Layer 2 — semantic tokens (dark) */
+  --surface: var(--ink);
+  --surface-raised: var(--ink-raised);
+  --surface-feature: var(--ink-feature);
+  --text-primary: var(--bone);
+  --text-secondary: var(--bone-soft);
+  --text-on-feature: var(--bone);
+  --accent: var(--gold-lit);
+  --accent-wash: var(--gold-ember);
+  --rule: var(--rule-dark);
+  --status-balance: var(--green-lit);
+  --surface-code: #1f1a24; /* same value in both themes, by design */
+}
+
+/* No-JS fallback: if script never ran to set `.dark` (or, once feature 03
+   lands, an explicit `.light`), follow the OS preference instead. Values
+   mirror the `.dark` block above. */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    --surface: #161219;
+    --surface-raised: #1f1a24;
+    --surface-feature: #2a2331;
+    --text-primary: #ede9e4;
+    --text-secondary: #a79dae;
+    --text-on-feature: #ede9e4;
+    --accent: #d4a24c;
+    --accent-wash: #3a2e1c;
+    --rule: #332c3a;
+    --status-balance: #7fa98b;
+    --surface-code: #1f1a24;
+  }
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    transition:
+      background-color 150ms var(--ease-out),
+      color 150ms var(--ease-out);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    color: var(--color-text-primary);
+  }
+
+  /* Fraunces: low softness throughout, wonky forms reserved for display sizes */
+  h1,
+  h2,
+  h3 {
+    font-variation-settings: "SOFT" 0;
+  }
+  h1,
+  h2 {
+    font-variation-settings:
+      "SOFT" 0,
+      "WONK" 1;
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: var(--font-mono);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
