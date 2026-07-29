@@ -6,9 +6,9 @@ Update after every completed feature. Anyone (or any agent) reading this should 
 
 ## Current Status
 
-**Phase:** Phase 1 — Foundation
-**Last completed:** 02 Design System Foundation
-**Next:** 03 Layout Shell + Theme Toggle
+**Phase:** Phase 2 — Content Pipeline
+**Last completed:** 03 Layout Shell + Theme Toggle
+**Next:** 04 MDX Pipeline + Content Layer
 
 ---
 
@@ -17,7 +17,7 @@ Update after every completed feature. Anyone (or any agent) reading this should 
 ### Phase 1 — Foundation
 - [x] 01 Project Setup
 - [x] 02 Design System Foundation
-- [ ] 03 Layout Shell
+- [x] 03 Layout Shell
 
 ### Phase 2 — Content Pipeline
 - [ ] 04 MDX Pipeline + Content Layer
@@ -91,3 +91,12 @@ Blocking content, not code. Resolve before the features that need them.
 - `git-workflow.md` is carried over from SubTrack with only the project name changed; conventions are identical
 - Dark mode was added to the plan after the first draft of these docs; `ui-tokens.md` (color system), `ui-rules.md` (toggle, dark-mode screenshots), `architecture.md` (flash prevention, no-JS fallback), `build-plan.md` (features 02/03/12), and `code-standards.md` (semantic-token rule, both-themes verification) were all updated in the same pass — no doc left describing a single-theme site
 - **02 Design System Foundation:** both palettes, semantic layer, Tailwind v4 `@custom-variant dark` wiring, type scale, spacing/radius/motion tokens, fonts (Fraunces w/ SOFT+WONK axes, Archivo, IBM Plex Mono via `next/font/google`), base element styles, focus ring, reduced-motion block, and the no-JS `@media (prefers-color-scheme: dark)` fallback all landed in `globals.css` + `layout.tsx`. The no-JS fallback selector is `:root:not(.light):not(.dark)` rather than the simpler `:not(.dark)` — feature 03's inline theme script must add an explicit `.light` class when the resolved theme is light (not just omit `.dark`), otherwise a manual "light" override on a dark-OS device would be clobbered by the fallback media query. Verified with Playwright (see decision above) rather than manual screenshots — contrast, keyboard focus, 320px overflow, and reduced-motion all confirmed in both themes; scratch page and script deleted after
+- **03 Layout Shell + Theme Toggle:** `Header` (sticky, wordmark, nav, toggle), `Footer`, `Container`, `not-found.tsx`, root `layout.tsx` with the blocking inline theme script, `viewport.themeColor` (media-query pair, per Next 16's current API — `themeColor` lives in the `viewport` export, not `metadata`), and root `metadata` (`metadataBase`, title template, description). `lucide-react` installed (pre-approved in `architecture.md`).
+  - **Inline script always resolves to exactly one class** (`.dark` or `.light`), even when the user's choice is "system" — it reads `localStorage.theme`, falls back to `matchMedia`, and sets the class before paint. This means the CSS `:root:not(.light):not(.dark)` fallback only ever fires for JS-disabled visitors, which is its intended purpose. `ThemeToggle`'s `applyTheme()` mirrors this exact logic so client-side toggling and the pre-hydration script never disagree.
+  - **`ThemeToggle` reads its initial state via a `useState` lazy initializer**, not a `useEffect` — the initializer runs during the client's first render (before that render is ever painted), so there's no separate render-then-correct pass. `suppressHydrationWarning` is on the icon/label spans since the server-rendered default (`"system"`/`Monitor`, since the server has no `localStorage`) will usually differ from the client's real stored value.
+  - **A third and fourth client component were needed beyond the toggle**: `NavLinks` (uses `usePathname()` for active-route highlighting — not available to Server Components) and `ThemeToggle` itself. `Header`/`Footer`/`Container` stay Server Components.
+  - **Header's "hairline appears only after scroll" is CSS-only** — a scroll-driven animation (`animation-timeline: scroll(root)`) fades the border-bottom in from transparent over the first 48px of scroll, wrapped in `@supports (animation-timeline: scroll())` with a static hairline as the fallback for non-supporting browsers. This avoids a third scroll-listening client component. Confirmed working with Playwright (border-color changes from `transparent` to `--rule` once real scrollable content exists — the feature 03 placeholder home page has none yet, so this needs a recheck once feature 06/07 add real page height).
+  - **320px pass failed on the first pass**: the full wordmark "Bruce Nkundabagenzi" plus three nav links plus the toggle measured 423px wide against a 320px viewport. Fixed by showing "BN" as the wordmark below the `640px` breakpoint (same breakpoint the toggle already uses to hide its label) and tightening nav/toggle gaps at that width. Full name still shows at ≥640px.
+  - **Meta description was authored now** (154 chars, trimmed from the hero subhead already approved in `content-spec.md`) so `layout.tsx`'s root metadata isn't left empty — revisit at feature 11 once the Hero and per-page metadata exist.
+  - **`NEXT_PUBLIC_SITE_URL` set** to `https://brucenkundabagenzi.com` in local `.env` (untracked) and recorded in a new committed `.env.example`.
+  - Verified with Playwright: OS-default (light/dark) with `localStorage` cleared, zero white flash across 5 dark-mode reloads, keyboard tab order + focus-visible in both themes, toggle cycles `system → light → dark → system` with updating `aria-label` and no header reflow, 320px overflow-free in both themes, reduced-motion content visible, 404 page renders with header/footer. Scratch script and screenshots deleted after.
