@@ -7,15 +7,15 @@ Update after every completed feature. Anyone (or any agent) reading this should 
 ## Current Status
 
 **Phase:** Phase 1 — Foundation
-**Last completed:** None — context documentation written, implementation not started
-**Next:** 01 Project Setup
+**Last completed:** 01 Project Setup
+**Next:** 02 Design System Foundation
 
 ---
 
 ## Progress
 
 ### Phase 1 — Foundation
-- [ ] 01 Project Setup
+- [x] 01 Project Setup
 - [ ] 02 Design System Foundation
 - [ ] 03 Layout Shell
 
@@ -78,6 +78,7 @@ Blocking content, not code. Resolve before the features that need them.
 - **Theme toggle: three states (`system → light → dark`), cycling, icon + mono label** — resolved, no longer open. Fixed button width sized to the longest label so the header never reflows on click; label hides below 640px with the accessible name carrying full state. Spec in `ui-rules.md`
 - **Themes are a designed pair, not an inversion** — dark is warm plum-shifted (never neutral black), gold lifts to `#D4A24C` for contrast, and the feature section inverts in opposite directions per theme (darker on light, lighter on dark) through one semantic token
 - **Launch at feature 12, not feature 16** — the job search starts when the link works
+- **`next.config.ts` sets `output: "export"` and `images.unoptimized: true` from feature 01, not deferred to launch** — static export disables Next's Image Optimization server outright, so leaving `next/image` on its default loader would build clean now and fail the moment `output: "export"` is added later. Setting both together at project setup means every subsequent feature is developed against the real static-export constraint
 
 ---
 

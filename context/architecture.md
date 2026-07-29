@@ -221,6 +221,8 @@ The dependency list is short on purpose; this site's performance is part of its 
 
 **Approved:** `next`, `react`, `react-dom`, `typescript`, `tailwindcss`, MDX pipeline packages, `gray-matter`, `shiki`, `zod` (frontmatter validation), `lucide-react` (icons, tree-shaken imports only — also supplies the theme toggle glyphs).
 
+**Dev tooling (no shipped-code footprint, exempt from the performance rationale above but still recorded):** `prettier` + `eslint-config-prettier` — build-plan feature 01 calls for ESLint/Prettier together; `eslint-config-prettier` turns off the ESLint stylistic rules that would otherwise fight Prettier's formatting.
+
 **Conditionally approved:** `next-themes` — only if hand-rolled theming hits a real edge case (see Theming above). Record the specific reason here before installing.
 
 **Explicitly not approved:** any animation library (see `motion-spec.md`), any UI component library (shadcn included — this site's components are few, small, and hand-written to match a bespoke identity), any CMS SDK, any analytics tool requiring consent, any carousel/slider library.
