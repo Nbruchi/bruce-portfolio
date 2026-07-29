@@ -7,8 +7,8 @@ Update after every completed feature. Anyone (or any agent) reading this should 
 ## Current Status
 
 **Phase:** Phase 2 — Content Pipeline
-**Last completed:** 03 Layout Shell + Theme Toggle
-**Next:** 04 MDX Pipeline + Content Layer
+**Last completed:** 04 MDX Pipeline + Content Layer
+**Next:** 05 Content Components
 
 ---
 
@@ -20,7 +20,7 @@ Update after every completed feature. Anyone (or any agent) reading this should 
 - [x] 03 Layout Shell
 
 ### Phase 2 — Content Pipeline
-- [ ] 04 MDX Pipeline + Content Layer
+- [x] 04 MDX Pipeline + Content Layer
 - [ ] 05 Content Components
 
 ### Phase 3 — Launchable Site (launch gate)
@@ -100,3 +100,10 @@ Blocking content, not code. Resolve before the features that need them.
   - **Meta description was authored now** (154 chars, trimmed from the hero subhead already approved in `content-spec.md`) so `layout.tsx`'s root metadata isn't left empty — revisit at feature 11 once the Hero and per-page metadata exist.
   - **`NEXT_PUBLIC_SITE_URL` set** to `https://brucenkundabagenzi.com` in local `.env` (untracked) and recorded in a new committed `.env.example`.
   - Verified with Playwright: OS-default (light/dark) with `localStorage` cleared, zero white flash across 5 dark-mode reloads, keyboard tab order + focus-visible in both themes, toggle cycles `system → light → dark → system` with updating `aria-label` and no header reflow, 320px overflow-free in both themes, reduced-motion content visible, 404 page renders with header/footer. Scratch script and screenshots deleted after.
+- **04 MDX Pipeline + Content Layer:** `src/lib/content.ts` (fs read → `gray-matter` → `zod` validation → `next-mdx-remote/rsc`'s `compileMDX`, per the decision already recorded in `architecture.md`) and `src/lib/reading-time.ts` (hand-rolled word-count estimate, no package — none was on the approved dependency list and the math is trivial). `gray-matter`, `zod`, `shiki`, `next-mdx-remote` added to `package.json`, matching the pre-approved list in `architecture.md`'s Dependency Policy — no new entry needed there.
+  - **`compileMDX` is called inside the `lib/content.ts` loaders** (`getWorkBySlug` / `getPostBySlug`), not in the page components — the architecture doc's own wording ("`compileMDX()` slots directly into that loader") settled this. Both loaders accept an optional `components` map merged with a built-in one, so feature 05/08/09 can layer on the Content Components' MDX overrides (headings, prose, `Figure`, etc.) without touching the compile call itself.
+  - **Shiki is wired via a `pre` component override** (an async Server Component that reads the code element's language + text and calls `codeToHtml`), not a rehype plugin — this avoids adding `@shikijs/rehype` or `unist-util-visit` (neither on the approved dependency list) for what a ~10-line component override does just as well under RSC. Verified end-to-end: a fixture code block in `content/work/subtrack.mdx` produces real `class="shiki ..."` markup in the static HTML output of a temporary scratch page (deleted after, same pattern as feature 02's scratch page).
+  - **Theme picked for now: `github-dark`, unreconciled with `--surface-code`.** `ui-rules.md` specifies code blocks are theme-stable and sit on the `--surface-code` token — feature 05, which owns the actual code-block Content Component and its visual treatment, needs to either strip Shiki's inline background so `--surface-code` shows through, or swap to a Shiki theme/`createCssVariablesTheme()` setup that resolves to the same token. Flagging so it isn't missed.
+  - **Content fixtures created for all three case studies and two posts** (`content/work/{restaurant-saas,withintech-learn,subtrack}.mdx`, `content/writing/{append-only-financial-records,correct-daily-job-hosting-sleeps}.mdx`). Frontmatter fields (title, summary/description, role, timeframe, stack, links, figures, order) are sourced only from already-approved text in `content-spec.md` and `profile-facts.md` — nothing invented — but the MDX **bodies are placeholders** pointing at the build-plan feature that owns the real write-up (08 for the two non-confidential case studies, 13 for the restaurant platform after client review, 09/14 for the two posts). Both posts are `draft: true` since neither is written yet; this also exercised the draft-filtering logic (`next build`'s static generation runs with `NODE_ENV=production`, and the writing index came back empty, correctly excluding both drafts).
+  - **Verification used `next build` against a temporary `src/app/scratch-content/page.tsx`**, not a standalone `tsx`/`ts-node` script — running the loader through plain `tsx` hit an unrelated ESM/CJS resolution error in a transitive dependency (`estree-walker`, pulled in by the MDX compiler) that doesn't occur under Next's own bundler. The build-based check is arguably the more authoritative one anyway (it's the real pipeline, Turbopack and all). Confirmed: the parsed index of both collections printed correctly (work sorted by `order`, drafts excluded from the writing index in production), and deliberately setting `order: "three"` in `subtrack.mdx` failed the build with a readable, file-and-field-specific error (`Invalid frontmatter in content\work\subtrack.mdx:\n  - order: Invalid input: expected number, received string`) before it was reverted. Scratch page and build output deleted after.
+  - No UI shipped in this feature (no page renders these loaders in production yet), so the usual keyboard/reduced-motion/both-themes/320px checks don't apply — first real applicability is feature 08.
