@@ -4,7 +4,7 @@ import { createElement, type ReactElement } from "react";
 
 import matter from "gray-matter";
 import { compileMDX } from "next-mdx-remote/rsc";
-import { codeToHtml } from "shiki";
+import { codeToHtml, type ShikiTransformer } from "shiki";
 import { z } from "zod";
 
 const WORK_DIR = path.join(process.cwd(), "content", "work");
@@ -44,11 +44,28 @@ export type PostItem = { slug: string; frontmatter: PostFrontmatter };
 // highlighted markup.
 type CodeElement = ReactElement<{ className?: string; children?: string }>;
 
+// Shiki's theme sets an inline background/text color on the generated `<pre>`
+// so it renders correctly standalone — but `ui-rules.md` requires the code
+// surface to be the fixed `--surface-code` token, not whatever hex the
+// "github-dark" theme happens to use. Stripping the inline style and adding
+// the token-backed utility classes here (rather than in a component override)
+// keeps this the one place that knows about Shiki's output shape.
+const codeBlockTransformer: ShikiTransformer = {
+  pre(node) {
+    delete node.properties.style;
+    this.addClassToHast(node, "overflow-x-auto rounded-lg bg-surface-code p-4 text-small text-text-primary");
+  },
+};
+
 async function CodeBlock({ children }: { children: CodeElement }): Promise<ReactElement> {
   const className = children.props.className ?? "";
   const lang = className.replace("language-", "") || "text";
   const code = children.props.children ?? "";
-  const html = await codeToHtml(code, { lang, theme: "github-dark" });
+  const html = await codeToHtml(code, {
+    lang,
+    theme: "github-dark",
+    transformers: [codeBlockTransformer],
+  });
   return createElement("div", { dangerouslySetInnerHTML: { __html: html } });
 }
 
@@ -110,7 +127,12 @@ export async function getWorkBySlug(
   const { frontmatter, content } = readFrontmatter(WORK_DIR, slug, workFrontmatterSchema);
   const { content: compiled } = await compileMDX<WorkFrontmatter>({
     source: content,
-    options: { parseFrontmatter: false },
+    // blockJS defaults to true (next-mdx-remote 6+) and strips every `{expression}`
+    // JSX attribute, not just executable code — that includes the numeric
+    // `width`/`height` props next/image requires and array props like
+    // `StackChips`'s `stack`. Content here is authored solely by Bruce and
+    // versioned in the repo, so it's safe to allow; blockDangerousJS stays on.
+    options: { parseFrontmatter: false, blockJS: false },
     components: { pre: CodeBlock, ...components },
   });
 
@@ -124,7 +146,7 @@ export async function getPostBySlug(
   const { frontmatter, content } = readFrontmatter(WRITING_DIR, slug, postFrontmatterSchema);
   const { content: compiled } = await compileMDX<PostFrontmatter>({
     source: content,
-    options: { parseFrontmatter: false },
+    options: { parseFrontmatter: false, blockJS: false },
     components: { pre: CodeBlock, ...components },
   });
 
