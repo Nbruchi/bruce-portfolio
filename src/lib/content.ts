@@ -17,8 +17,11 @@ const workFrontmatterSchema = z.object({
   timeframe: z.string(),
   stack: z.array(z.string()).min(1),
   liveUrl: z.url().optional(),
+  liveLinkLabel: z.string().optional(),
   repoUrl: z.url().optional(),
   figures: z.array(z.string()).min(1),
+  built: z.string(),
+  proves: z.string(),
   order: z.number().int(),
   featured: z.boolean(),
 });
