@@ -235,3 +235,32 @@
     border-bottom-color: var(--color-rule);
   }
 }
+
+/* Hero entrance: the site's one permitted "hero moment" (motion-spec.md).
+   Pure CSS and present in the DOM from first paint, so the headline,
+   subhead, and CTA row are readable even with JavaScript disabled — the
+   animation only ever adds motion on top of already-present text. */
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-headline,
+.hero-subhead,
+.hero-ctas {
+  animation: hero-in 250ms var(--ease-out) both;
+}
+
+.hero-subhead {
+  animation-delay: 70ms;
+}
+
+.hero-ctas {
+  animation-delay: 140ms;
+}
