@@ -13,14 +13,74 @@ order: 3
 featured: true
 ---
 
-## Overview
+## The problem
 
-Full case study coming in build-plan feature 08.
+Subscriptions accumulate quietly — a free trial that converted, a tool a past-self signed up for in a different currency, a renewal date nobody wrote down. By the time anyone adds it up, months of spend are already gone. I wanted one place that tracked every subscription across currencies and billing cycles, with the renewal math trustworthy enough that a due date on screen is never wrong. That last part is the actual problem: subscriptions aren't technically hard, but a tracker that gets its one job — telling you what's due and when — wrong on a scheduled job somewhere in the background is worse than not having a tracker at all.
 
-A code block, to confirm Shiki highlights build-time:
+## What I built
 
-```ts
-function example(): string {
-  return "shiki highlighting check";
-}
-```
+One documented Nest.js API, versioned migrations from the first commit, and two independent clients against it: a Next.js web app and an Expo mobile app, both strict TypeScript. Subscriptions carry their own currency, converted to a base currency for totals using cached exchange rates rather than a live call on every render. A scheduled job advances renewals and writes a payment-history row for each one — the record a user actually audits later. On top of that: spend limits with a progress indicator, CSV and PDF export for both the subscription list and payment history, and Gmail-based detection that scans a connected inbox for subscription-confirmation emails and surfaces them for review instead of silently auto-adding anything.
+
+The web and mobile clients were built separately against the same OpenAPI-documented contract rather than sharing a UI layer — deliberately, so the API's shape had to be right on its own terms rather than convenient for whichever client was built first.
+
+## The renewal job on hosting that sleeps
+
+The scheduled job runs daily and advances any subscription whose renewal date has passed. The naive version — "add one billing cycle to today" — works fine until the job doesn't run for a while. Free-tier hosting suspends a service after a period of inactivity and wakes it on the next request, so "daily" is really "at least daily, sometimes with a multi-day gap." If the job had missed three days and then just fired once against *today's* date, a weekly subscription would silently skip a cycle, or a monthly one would renew early — either way, the payment history it wrote would misrepresent when the subscription actually would have renewed.
+
+The fix has three parts. First, the job doesn't ask "is this due today" — it walks forward from the subscription's last known due date, one cycle at a time, until it catches up to the present, writing a payment-history row for every cycle it advances through, not just the most recent one. Second, each written row is idempotent: it's keyed on the subscription and the cycle's due date, so if the job runs twice for the same period — which a sleeping host makes more likely, not less, because retries and cold-start double-invocations happen — the second write is a no-op instead of a duplicate row. Third, and the detail that's easy to get backwards: `paidAt` on each row is set to the cycle's *due date*, not the timestamp the job happened to run at. The history is supposed to answer "when was this subscription due," and a job that only ran because a server woke up three days late shouldn't leak its own execution time into that answer.
+
+I verified it by seeding a subscription with a due date several cycles in the past and confirming the catch-up loop produced one correctly-dated row per missed cycle, then running the job a second time against the same state and confirming nothing changed — the idempotency check doing its job rather than the loop happening to be safe by accident.
+
+## What I'd do differently
+
+I'd add job observability from day one instead of after the fact — a log of every run, what it advanced, and how many cycles it caught up on. I only really trusted the catch-up logic once I could see it working across real gaps in production, and I found that out empirically rather than by design. Cheap to add, and it's the kind of thing that turns "I think the job is fine" into "here's the last thirty runs."
+
+## Screenshots
+
+<Figure
+  src="/work/subtrack/web-landing.png"
+  alt="SubTrack marketing landing page showing the headline 'Your subscriptions are quietly draining you' and summary stat cards for monthly spend, yearly spend, active subscriptions, and upcoming renewals"
+  width={1896}
+  height={832}
+  caption="Landing page — web"
+/>
+
+<Figure
+  src="/work/subtrack/web-dashboard.png"
+  alt="SubTrack web dashboard showing total monthly and yearly spend, active subscription count, a monthly spend limit progress bar, a spend trend line chart, and a category breakdown donut chart"
+  width={1894}
+  height={838}
+  caption="Dashboard — web"
+/>
+
+<Figure
+  src="/work/subtrack/web-subscriptions.png"
+  alt="SubTrack web subscriptions list with a banner for two subscriptions detected from the connected inbox awaiting review, and a table of active and cancelled subscriptions with cost, billing cycle, and next renewal date"
+  width={1896}
+  height={831}
+  caption="Subscriptions list, with Gmail-detected subscriptions awaiting review — web"
+/>
+
+<MobileScreenshotFrame>
+  <Figure
+    src="/work/subtrack/mobile-welcome.jpeg"
+    alt="SubTrack mobile app welcome screen with the app mark and a Get Started button"
+    width={540}
+    height={1097}
+    caption="Welcome — mobile"
+  />
+  <Figure
+    src="/work/subtrack/mobile-dashboard.jpeg"
+    alt="SubTrack mobile dashboard showing spend totals, a spend limit progress bar, and a spend trend chart across several months"
+    width={540}
+    height={1100}
+    caption="Dashboard — mobile"
+  />
+  <Figure
+    src="/work/subtrack/mobile-subscriptions.jpeg"
+    alt="SubTrack mobile subscriptions list filtered to active subscriptions, showing cost, billing cycle, and next renewal date for each"
+    width={540}
+    height={1100}
+    caption="Subscriptions list — mobile"
+  />
+</MobileScreenshotFrame>

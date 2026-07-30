@@ -13,6 +13,52 @@ order: 2
 featured: true
 ---
 
-## Overview
+## Scope, stated upfront
 
-Full case study coming in build-plan feature 08.
+WithinTech Learn already had a working code-execution engine, a set of coding challenges, and user authentication when I joined a three-person distributed team building on top of it — one developer in the US, two of us in Rwanda, working async with no meaningful overlap in working hours. None of that predates-me infrastructure is mine, and none of it appears below. What I built is the learning experience wrapped around it: the course structure, the progression logic that gates it, the quizzes, the automated engagement that brings students back, French and Kinyarwanda translation, and a dark theme.
+
+## The problem
+
+A platform with real content and a real audience still needs the layer that turns content into a course: something that gates a student's progress instead of leaving every module open at once, assesses whether a module actually landed before letting a student move on, and reaches back out to students who signed up and then went quiet. None of that existed yet. The platform also shipped in English only, in a region where French and Kinyarwanda are both first languages for a meaningful share of the audience, and it had no dark theme on a platform aimed at developers who spend hours a day in an editor.
+
+## What I built
+
+Courses are structured as course → module → sub-module, each sub-module gated behind the completion of the one before it, with a quiz at the end of a module standing as the actual gate rather than a formality — a student who hasn't passed the quiz hasn't unlocked what comes next. The quiz system itself is mine: question types, scoring, and the pass threshold that progression reads from. On top of that, automated email engagement keeps students moving without anyone sending emails by hand — an invitation when a student is added to the platform, reminders for students who've stalled, and a reward notification for top performers on a course. I introduced French and Kinyarwanda translation into an app that had only ever shipped in English, and built the dark theme the platform didn't have.
+
+Subscription payments run through a local fintech partner I sourced and did the initial integration and configuration for; a teammate wrote the payment implementation itself, so I don't claim that part beyond having set the connection up.
+
+## Gated progression and progress computation
+
+The hard part of gated progression isn't the locking — a locked module is a single boolean. It's keeping a student's *computed* progress consistent with what the UI shows once the hierarchy has three levels and students don't always move through it in a straight line: a student can pass a quiz, retake it anyway, jump back to an earlier module to review, or have a sub-module that was unlocked and then re-locked by a later change to the course. If progress is cached or computed in more than one place, those places drift, and a drifted progress bar is the kind of bug a student notices immediately and a support ticket you can't easily reproduce.
+
+The design I settled on treats completion as the only source of truth: a record per student per sub-module marking it done, and a record per student per quiz marking a pass, each written once and updated in place rather than duplicated on a retake. Everything downstream — whether a sub-module is unlocked, a module's percentage complete, a course's overall progress — is computed from those records at read time rather than stored as a separate cached number, so there's exactly one place that can be wrong instead of two that can disagree. A retaken quiz overwrites its own pass record rather than inserting a second one, which matters because "did they pass" needs to stay a single fact per student per quiz, not a growing list a query has to reduce correctly every time it's read.
+
+## What I'd do differently
+
+I'd design the translation layer around message keys from the start rather than introducing i18n after the app already had a year of hardcoded English strings scattered through components. Retrofitting it meant a slow, careful pass through the whole UI to find every string that needed a key, and a chunk of that time would have been free if the project had started with `next-i18next` in place instead of bolted on.
+
+## Screenshots
+
+<Figure
+  src="/work/withintech-learn/course-progress.png"
+  alt="WithinTech Learn course view for 'AI-Assisted Development' showing module 3 of 9 active, two earlier modules marked complete with a checkmark, and later modules shown locked and numbered in the sidebar"
+  width={1891}
+  height={829}
+  caption="Course view with gated module progression — completed, active, and locked states"
+/>
+
+<Figure
+  src="/work/withintech-learn/course-quiz.png"
+  alt="A sub-module quiz mid-attempt, showing multiple-choice questions with checkbox answers about prompt-engineering techniques"
+  width={1885}
+  height={835}
+  caption="A module quiz mid-attempt — the gate that progression reads from"
+/>
+
+<Figure
+  src="/work/withintech-learn/engagement-email-1.png"
+  alt="An automated WithinTech Learn platform-invitation email rendered in Gmail, addressed to a test invitee"
+  width={1888}
+  height={798}
+  caption="One of the automated engagement emails — a platform invitation"
+/>
