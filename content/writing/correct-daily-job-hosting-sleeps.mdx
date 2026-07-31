@@ -2,7 +2,33 @@
 title: "Running a correct daily job on hosting that sleeps"
 description: "The SubTrack renewal-job failure and its three-layer fix — catch-up loop, idempotency, and why paidAt is the due date, not the run date."
 date: "2026-07-29"
-draft: true
+draft: false
 ---
 
-Full post coming in build-plan feature 09.
+A scheduled job that runs "daily" on free-tier hosting does not run daily. The host suspends the service after a period of inactivity and wakes it on the next request, so a cron-triggered job actually fires at least once a day, sometimes with a multi-day gap, and occasionally twice in a row when a cold start and a retry both land. SubTrack's renewal job — the one that advances every subscription past its due date and writes the payment-history row a user later audits — had to be correct under all three of those conditions, not just the happy one.
+
+## The naive version, and how it fails
+
+The obvious implementation asks one question: is this subscription due today? If yes, advance it one billing cycle and write a row. That's correct exactly as long as the job runs every single day. The moment it doesn't — three days of inactivity, say — the job wakes up, checks "is this due today," and finds a subscription that was due two days ago no longer matches. A weekly subscription silently skips a cycle. A monthly one, if the gap lands wrong, renews early. Either way, the payment history now misrepresents when the subscription actually would have renewed, and nothing about the failure is visible until someone notices their spend total is wrong months later.
+
+The fix has three parts, and each one closes a specific gap the others don't.
+
+## Catch up, don't check in
+
+Instead of asking "is this due today," the job walks forward from the subscription's last known due date, one billing cycle at a time, until it catches up to the present. For each cycle it advances through, it writes a payment-history row — not just for the most recent gap, but for every cycle the gap actually spanned. A subscription that missed three weekly cycles gets three rows, each dated correctly, not one row that quietly absorbs the other two.
+
+## Idempotent by construction, not by luck
+
+A sleeping host makes double-invocation more likely, not less — a cold start plus a retry, or two requests racing to wake the same instance, both landing on the job in the same window. So each written row is keyed on the subscription and the specific cycle's due date. If the job runs twice for the same period, the second write is a no-op instead of a duplicate row. This isn't a deduplication pass bolted on afterward; it's the same key that makes the catch-up loop safe to re-run from scratch if it's ever interrupted mid-loop.
+
+## `paidAt` is the due date, not the run date
+
+The detail that's easy to get backwards: each row's `paidAt` is set to the cycle's due date, not the timestamp the job happened to execute at. The history exists to answer "when was this subscription due," and a job that only ran because a server woke up three days late has no business leaking its own execution time into that answer. Get this one wrong and the catch-up loop and the idempotency key can both be correct while the data they produce still lies.
+
+## Verifying it
+
+I seeded a subscription with a due date several cycles in the past and ran the job, confirming it produced one correctly-dated row per missed cycle rather than one row for the whole gap. Then I ran the same job again against the identical state and confirmed nothing changed — the idempotency key doing its job rather than the loop happening to be safe by accident. That second run is the one that actually matters: a job that behaves correctly the first time and silently duplicates data the second time will pass a casual test and fail in production the first time a request retries.
+
+## What I'd add next
+
+Job observability from day one, not after the fact — a log of every run, what it advanced, and how many cycles it caught up on. I trusted this logic once I could watch it work across real gaps in production, and that's empirical confidence, not designed-in confidence. It's a cheap addition, and it turns "I think the job is fine" into "here are the last thirty runs and what each one did" — which is the actual standard a background job that touches money should be held to.

@@ -7,6 +7,8 @@ import { compileMDX } from "next-mdx-remote/rsc";
 import { codeToHtml, type ShikiTransformer } from "shiki";
 import { z } from "zod";
 
+import { getReadingTime } from "./reading-time";
+
 const WORK_DIR = path.join(process.cwd(), "content", "work");
 const WRITING_DIR = path.join(process.cwd(), "content", "writing");
 
@@ -38,7 +40,7 @@ const postFrontmatterSchema = z.object({
 export type PostFrontmatter = z.infer<typeof postFrontmatterSchema>;
 
 export type WorkItem = { slug: string; frontmatter: WorkFrontmatter };
-export type PostItem = { slug: string; frontmatter: PostFrontmatter };
+export type PostItem = { slug: string; frontmatter: PostFrontmatter; readingTime: number };
 
 // The `pre` override handed to every `compileMDX` call so Shiki highlighting
 // applies wherever MDX content is rendered, without every caller repeating it.
@@ -115,10 +117,10 @@ export function getAllPosts(): PostItem[] {
   const isProduction = process.env.NODE_ENV === "production";
 
   return readSlugs(WRITING_DIR)
-    .map((slug) => ({
-      slug,
-      frontmatter: readFrontmatter(WRITING_DIR, slug, postFrontmatterSchema).frontmatter,
-    }))
+    .map((slug) => {
+      const { frontmatter, content } = readFrontmatter(WRITING_DIR, slug, postFrontmatterSchema);
+      return { slug, frontmatter, readingTime: getReadingTime(content) };
+    })
     .filter((post) => !isProduction || !post.frontmatter.draft)
     .sort((a, b) => b.frontmatter.date.localeCompare(a.frontmatter.date));
 }
@@ -145,13 +147,14 @@ export async function getWorkBySlug(
 export async function getPostBySlug(
   slug: string,
   components?: MDXComponents,
-): Promise<{ frontmatter: PostFrontmatter; content: ReactElement }> {
+): Promise<{ frontmatter: PostFrontmatter; content: ReactElement; readingTime: number }> {
   const { frontmatter, content } = readFrontmatter(WRITING_DIR, slug, postFrontmatterSchema);
+  const readingTime = getReadingTime(content);
   const { content: compiled } = await compileMDX<PostFrontmatter>({
     source: content,
     options: { parseFrontmatter: false, blockJS: false },
     components: { pre: CodeBlock, ...components },
   });
 
-  return { frontmatter, content: compiled };
+  return { frontmatter, content: compiled, readingTime };
 }
