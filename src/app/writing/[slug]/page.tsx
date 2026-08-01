@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 
 import { mdxComponents } from "@/components/content/mdx-components";
 import { Container } from "@/components/layout/Container";
+import { ArrowLink } from "@/components/ui/ArrowLink";
 import { PostHeader } from "@/components/writing/PostHeader";
 import { getAllPosts, getPostBySlug } from "@/lib/content";
 import { SITE_NAME, SITE_URL } from "@/lib/metadata";
@@ -48,7 +49,10 @@ export default async function PostPage({
   return (
     <main className="py-section-gap">
       <Container size="prose">
-        <article>
+        <ArrowLink href="/writing" direction="back">
+          All writing
+        </ArrowLink>
+        <article className="mt-8">
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingJsonLd) }}

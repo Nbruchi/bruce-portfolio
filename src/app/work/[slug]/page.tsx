@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 
 import { mdxComponents } from "@/components/content/mdx-components";
 import { Container } from "@/components/layout/Container";
+import { ArrowLink } from "@/components/ui/ArrowLink";
 import { CaseStudyHeader } from "@/components/work/CaseStudyHeader";
 import { getAllWork, getWorkBySlug } from "@/lib/content";
 
@@ -37,7 +38,10 @@ export default async function WorkPage({
   return (
     <main className="py-section-gap">
       <Container size="prose">
-        <article>
+        <ArrowLink href="/#ledger" direction="back">
+          All work
+        </ArrowLink>
+        <article className="mt-8">
           <CaseStudyHeader frontmatter={frontmatter} />
           {content}
         </article>

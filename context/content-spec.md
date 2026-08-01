@@ -105,6 +105,7 @@ Three most recent posts: title, date (mono), one-line description. Then `All pos
 
 Every case study follows this shape. Consistency is a signal in itself.
 
+0. **Back link**, above the header — `← All work`, to `/#ledger` (there is no standalone work index route — the Ledger on home is it)
 1. **Header** — project name, one-line summary, role, timeframe, stack (mono chips), live/repo links where they exist
 2. **The problem** — 2–3 sentences on what the system needed to do and why it was hard. Not "the client wanted an app."
 3. **What I built** — the substance. Architecture decisions and their reasoning. This is where a technical reader decides whether you're real.
@@ -128,6 +129,8 @@ Three posts, in build order. Each one converts private, invisible experience int
 3. **"Governing an AI coding agent in a codebase where mistakes cost money"** — binding rules, invariant pre-flight checks, protected files, mandatory progress documentation. Rare, current, and genuinely differentiated content in 2026.
 
 Every post: date, reading time, and a real conclusion. No "in this article we will explore" throat-clearing — first sentence states the problem.
+
+Above the header, on every post page: a back link, `← All writing`, to `/writing`.
 
 ---
 

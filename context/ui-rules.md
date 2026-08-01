@@ -102,6 +102,7 @@ The one memorable device on the site. Three entries; each is a row whose two hal
 | **Text link (inline prose)** | `--accent`, underlined with `text-underline-offset: 0.2em`, `text-decoration-thickness: 1px`. Hover: thickness 2px |
 | **Arrow link** (case study, all posts) | `--text-primary` text + `→` in `--accent`. Hover: arrow translates 3px right, text → `--accent` |
 | **External link** | same as arrow link but `↗` glyph. Always `rel="noopener noreferrer"`, `target="_blank"` |
+| **Back link** (case study, post pages) | same as arrow link, reversed: `←` in `--accent` before the text. Hover: arrow translates 3px left, text → `--accent` |
 
 Focus visible on every interactive element: `2px solid --accent`, `outline-offset: 3px`. Never remove an outline without replacing it with something at least as visible.
 
@@ -110,6 +111,7 @@ Focus visible on every interactive element: `2px solid --accent`, `outline-offse
 ## Case Study / Post Pages
 
 - Single column, `--container-prose` (44rem), left-aligned. No sidebar, no floating table of contents in v1
+- Above the header block: a back link (see Buttons and Links) to the section index — `← All work` on case studies (to `/#ledger`, since there's no standalone work index route) and `← All writing` on posts (to `/writing`). Gives a way back to the list without relying on the header nav or the browser's back button
 - Header block: title (Fraunces, `--text-h2`), one-line summary (`--text-body-lg`, `--text-secondary`), then a mono meta row — role · timeframe · stack chips · links
 - Stack chips: mono, `--text-mono`, `--accent-wash` background, `--radius-sm`, `padding: 0.2rem 0.5rem`. Labels only, no logos
 - Prose: `--text-body-lg`, line-height 1.65, paragraph spacing `--space-6`. Headings get `--space-12` above, `--space-4` below
