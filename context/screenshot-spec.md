@@ -53,12 +53,14 @@ Web dashboard and mobile dashboard remain the hero shots for the case study head
 
 **Capture only what Bruce built.** A screenshot of the code-execution engine or the challenge list implies ownership the case study explicitly disclaims, and an interviewer who saw it will ask about it.
 
+**Status: full four-shot set captured and wired into `withintech-learn.mdx`.**
+
 | # | Shot | Notes |
 |---|---|---|
-| 1 | Course view with gated progression — locked and unlocked states both visible in one frame | The single most important shot: it is his work and the platform's spine |
-| 2 | Sub-module quiz, mid-attempt or on the results state | His work, and it shows the assessment layer |
-| 3 | Dark theme — the same view in both themes | His contribution, and it doubles as evidence of UI work |
-| 4 | One engagement email (reminder or top-performer reward) as rendered in an inbox | Email systems are invisible in app screenshots; this is the only way that work shows |
+| 1 | Course view with gated progression — locked and unlocked states both visible in one frame | The single most important shot: it is his work and the platform's spine. ✅ `course-progress.png` |
+| 2 | Sub-module quiz, mid-attempt or on the results state | His work, and it shows the assessment layer. ✅ `course-quiz.png` |
+| 3 | Dark theme — the same view in both themes | His contribution, and it doubles as evidence of UI work. ✅ `courses-light-theme.png` / `courses-dark-theme.png` (admin Courses management list — confirmed his work, replacing an earlier pair that wrongly showed the Challenges admin list) |
+| 4 | One engagement email (reminder or top-performer reward) as rendered in an inbox | Email systems are invisible in app screenshots; this is the only way that work shows. ✅ `engagement-email-1.png` |
 
 **Dropped:** language switcher / English-Kinyarwanda side-by-side — i18n work is still in progress, not ready to show.
 
@@ -78,13 +80,15 @@ Web dashboard and mobile dashboard remain the hero shots for the case study head
 
 **Capture from a seeded demo tenant with entirely fictional data — never a live business.**
 
+**Status: full five-shot set captured, staged in `public/work/rms/`.** Not yet wired into `restaurant-saas.mdx` — the case study body is still the feature-13 placeholder pending client review of the write-up itself (see `build-plan.md`); the images are ready to drop in when that feature starts.
+
 | # | Shot | Why |
 |---|---|---|
-| 1 | Stock movement log / audit trail view | The single best shot available: it makes the append-only invariant visible, and it is the traceability the customers actually bought |
-| 2 | Journal entries with a reversal pair | Shows corrections-as-reversals rather than edits — the case study's core argument, in one image |
-| 3 | Point-of-sale or order flow | Shows the operational surface the fiscal and stock machinery sits beneath |
-| 4 | A signed fiscal receipt, fictional identifiers only | Proves the compliance integration exists |
-| 5 | Mobile staff app — one screen | Establishes that the platform is genuinely three clients, not two |
+| 1 | Stock movement log / audit trail view | The single best shot available: it makes the append-only invariant visible, and it is the traceability the customers actually bought. ✅ `movement-logs.png` |
+| 2 | Journal entries with a reversal pair | Shows corrections-as-reversals rather than edits — the case study's core argument, in one image. ✅ `reversal-lines.png` (General Ledger report — an Accounts Receivable debit immediately reversed by a matching credit) |
+| 3 | Point-of-sale or order flow | Shows the operational surface the fiscal and stock machinery sits beneath. ✅ `order-flows.png` |
+| 4 | A signed fiscal receipt, fictional identifiers only | Proves the compliance integration exists. ✅ `signed-receipt-1.png` / `signed-receipt-2.png` |
+| 5 | Mobile staff app — one screen | Establishes that the platform is genuinely three clients, not two. ✅ `waiter-order.jpeg` (waiter-facing order detail screen) |
 
 **Must never appear:** client or company name, logos, real business names, real staff names, real customer data, real amounts, real tax identifiers or receipt signatures, internal system name, payment-aggregator name, anything carrying a `GAP-` identifier or referencing a vulnerability.
 
