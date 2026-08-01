@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo, Fraunces, IBM_Plex_Mono } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/metadata";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -27,13 +28,20 @@ const ibmPlexMono = IBM_Plex_Mono({
 const SET_THEME_SCRIPT = `(function(){try{var s=localStorage.getItem("theme");var d=s==="dark"||(s!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.add(d?"dark":"light")}catch(e){}})()`;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Bruce Nkundabagenzi — Software engineer",
-    template: "%s — Bruce Nkundabagenzi",
+    default: `${SITE_NAME} — Software engineer`,
+    template: `%s — ${SITE_NAME}`,
   },
-  description:
-    "Sole engineer on a restaurant platform with real-time fiscal compliance, double-entry accounting, and multi-channel payments — full-stack, web and mobile.",
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export const viewport: Viewport = {

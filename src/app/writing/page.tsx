@@ -8,6 +8,7 @@ import { getAllPosts } from "@/lib/content";
 export const metadata: Metadata = {
   title: "Writing",
   description: "Notes on the things that were hard.",
+  alternates: { canonical: "/writing" },
 };
 
 export default function WritingIndexPage(): ReactElement {
