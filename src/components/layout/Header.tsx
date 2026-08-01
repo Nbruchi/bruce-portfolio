@@ -17,6 +17,14 @@ export function Header() {
           </Link>
           <div className="flex items-center gap-3 sm:gap-6">
             <NavLinks />
+            <a
+              href="/resume.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-mono uppercase text-text-secondary transition-colors duration-150 hover:text-accent"
+            >
+              CV
+            </a>
             <ThemeToggle />
           </div>
         </div>
