@@ -219,7 +219,7 @@ export async function generateMetadata(
 
 The dependency list is short on purpose; this site's performance is part of its argument.
 
-**Approved:** `next`, `react`, `react-dom`, `typescript`, `tailwindcss`, MDX pipeline packages, `gray-matter`, `shiki`, `zod` (frontmatter validation), `lucide-react` (icons, tree-shaken imports only — also supplies the theme toggle glyphs).
+**Approved:** `next`, `react`, `react-dom`, `typescript`, `tailwindcss`, MDX pipeline packages, `gray-matter`, `shiki`, `zod` (frontmatter validation), `lucide-react` (icons, tree-shaken imports only — also supplies the theme toggle glyphs), `@vercel/analytics` (feature 12 — cookieless page-view tracking via the `<Analytics />` component, no consent banner required, matches the stack table's "Vercel Analytics (or none)" choice).
 
 **Dev tooling (no shipped-code footprint, exempt from the performance rationale above but still recorded):** `prettier` + `eslint-config-prettier` — build-plan feature 01 calls for ESLint/Prettier together; `eslint-config-prettier` turns off the ESLint stylistic rules that would otherwise fight Prettier's formatting. `playwright` (core library, not `@playwright/test`) — lets an agent drive a real Chromium instance to run the visual/keyboard/contrast/reduced-motion checks each feature's verify step already calls for, rather than asking the human to eyeball every pass. Ad-hoc scripts only, not a committed test suite — the build-plan has no testing phase.
 
