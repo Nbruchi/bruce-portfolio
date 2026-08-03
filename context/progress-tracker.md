@@ -6,9 +6,9 @@ Update after every completed feature. Anyone (or any agent) reading this should 
 
 ## Current Status
 
-**Phase:** Phase 3 — The Launchable Site (launch gate)
-**Last completed:** 11 SEO, Metadata, OG Images
-**Next:** 12 Deploy + Custom Domain
+**Phase:** Phase 4 — Depth (post-launch)
+**Last completed:** 12 Deploy + Custom Domain — **site is live at `brucenkundabagenzi.com`, launch gate cleared**
+**Next:** 13 Restaurant Platform Case Study
 
 ---
 
@@ -30,7 +30,7 @@ Update after every completed feature. Anyone (or any agent) reading this should 
 - [x] 09 Writing Index + Post Pages (+ first post)
 - [x] 10 About Page
 - [x] 11 SEO, Metadata, OG Images
-- [ ] 12 Deploy + Custom Domain
+- [x] 12 Deploy + Custom Domain
 
 ### Phase 4 — Depth (post-launch)
 - [ ] 13 Restaurant Platform Case Study
@@ -67,7 +67,7 @@ Blocking content, not code. Resolve before the features that need them.
 ## Decisions
 
 - **Site title confirmed:** `Software Engineer` on the site, `Digital Apps Developer (Software Engineer — full stack + mobile)` on the CV
-- **Domain purchased:** `brucenkundabagenzi.com` on Namecheap, $11.48 first year, Domain Privacy included free/forever, auto-renew on. DNS not yet pointed at Vercel — do this at feature 12 (or earlier if you want zero propagation delay at launch)
+- **Domain purchased:** `brucenkundabagenzi.com` on Namecheap, $11.48 first year, Domain Privacy included free/forever, auto-renew on. DNS pointed at Vercel in feature 12 — apex is canonical (`A` record → `216.198.79.1`), `www` is a 307 redirect to the apex (`CNAME` → Vercel-assigned target)
 
 - **CV PDF: confirmed yes** — `resume.pdf` in `public/`, linked from the header and About page (see `architecture.md`)
 - **Role positioning: full-stack leads, mobile stated explicitly, backend depth proven via case studies rather than led with** — reasoning in `profile-facts.md`'s Role Positioning section
@@ -159,3 +159,7 @@ Blocking content, not code. Resolve before the features that need them.
   - **TV1 restored as a separate Early Experience entry** (Jan–Jul 2025, Developer, real dates) placed several sections below the current role — not merely reordered but structurally separated from it, addressing Bruce's confidentiality concern that TV1 (a real, named company) sitting adjacent to the confidential client's role would let a reader infer the client's identity by date-adjacency alone. Creative Tim's internship included in the same section.
   - **Added SubTrack (Projects section) and GitHub/LinkedIn (Contact line)** — both were missing from the original file and had no room in the old template.
   - Bruce exported the final PDF himself from the rebuilt document; verified by reading the live `public/resume.pdf` directly and confirming it matches byte-for-byte in content.
+- **12 Deploy + Custom Domain — launch gate cleared.** `@vercel/analytics` added (dependency recorded in `architecture.md`) and wired as `<Analytics />` in the root layout, resolving the stack table's "Vercel Analytics (or none)" open choice in favor of Analytics — cookieless, no consent banner. Vercel project imported from the existing GitHub repo, `NEXT_PUBLIC_SITE_URL=https://brucenkundabagenzi.com` set as a Production environment variable, domain connected (apex canonical via `A` record, `www` redirects 307 to the apex via `CNAME`), HTTPS auto-provisioned by Vercel.
+  - **Found and fixed a real defect during the pre-launch OG-image check**: under `output: "export"`, `opengraph-image.tsx`'s static output has no file extension (`out/opengraph-image`, not `.png`), so Vercel's static file server can't infer a MIME type and served `Content-Type: application/octet-stream` — despite the route already declaring `contentType = "image/png"` (which only affects the `og:image:type` meta tag, not the actual file response header). This risked social crawlers (Twitter, LinkedIn, Slack) refusing to render the preview image, since they check the real response header, not just the meta tag. Fixed with a new `vercel.json` (`headers` rules matching `/opengraph-image` and `/(.*)/opengraph-image`, forcing `Content-Type: image/png`). Verified by `curl -I` against the live URLs post-redeploy — all three OG image routes (root, one case study, one post) now correctly return `image/png`.
+  - **Verified against the live custom domain** (not a preview URL): Lighthouse on `/` and `/work/subtrack` both scored 100/100/100/100 (performance/accessibility/best-practices/SEO), LCP 0.4s, zero CLS/TBT — well inside `architecture.md`'s performance budget. A Playwright pass across all seven routes confirmed: JS-disabled renders full body text and exactly one `h1` on every page; five hard dark-mode reloads all resolved to the `dark` class with no light-mode flash; reduced-motion leaves the hero visible at full opacity; no horizontal overflow at 320px in either theme on any page; keyboard's first tab stop is a real focusable element; every sitemap URL plus `/resume.pdf` and `/writing/rss.xml` return `200`. Confidentiality review: nothing on the live site names the restaurant-platform client, an internal system, or a `GAP-` identifier. Scratch verification script deleted after.
+  - **Two branches this feature**: `chore/12-deploy-custom-domain` (Analytics) merged as PR #14, then `fix/12-og-image-content-type` (the `vercel.json` fix, found mid-verification) merged as PR #15 — kept separate since they're different logical changes, per `git-workflow.md`.
