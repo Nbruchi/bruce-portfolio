@@ -1,0 +1,38 @@
+---
+title: "Governing an AI coding agent in a codebase where mistakes cost money"
+description: "Binding rules, invariant pre-flight checks, protected files, and mandatory progress documentation — the guardrails that make agentic development safe on a financial system."
+date: "2026-08-03"
+draft: false
+---
+
+An AI coding agent will happily rewrite a migration, "simplify" a reconciliation query, or refactor a service it wasn't asked to touch — and it will do it fluently, with confident-sounding reasoning, in the same three seconds it takes to fix the one-line bug you actually asked for. That's a fine failure mode in a throwaway script. In a codebase where a wrong number is real money — someone's balance, someone's tax filing, someone's payroll — it's not a productivity story, it's a liability, and the fix isn't "review the diff more carefully." A human reviewing every line an agent produces at the speed an agent produces it is not a real control; it's a rubber stamp with extra steps. The actual fix is making the agent's operating space narrow enough that most of the ways it could go wrong don't compile, don't apply, or don't get read in the first place.
+
+## Binding rules, read before the work starts
+
+The first guardrail is a set of rules the agent is required to read before writing anything — not a style guide it might consult, a document it loads at the start of the session and treats as overriding its own defaults. The rules name the non-negotiables specific to the system: which invariants may never be violated, which files require a human sign-off no matter how small the change looks, and what "done" means before anything is called finished. The details vary by project, but the shape is always the same: a short, specific document that turns "use good judgement" into an explicit, checkable list, read first rather than referenced occasionally.
+
+This matters more than it sounds like it should, because an agent without it doesn't fail loudly — it fails plausibly. It writes code that runs, passes the tests you happened to have, and looks like what a competent engineer would write, while quietly assuming something about the system that isn't true. A binding rules file doesn't make the agent smarter; it removes the plausible-but-wrong path before the agent ever considers it.
+
+## Invariant pre-flight checks
+
+Rules stated once at the top of a session get forgotten by the middle of it — context windows are long, but attention to a document read an hour and forty tool calls ago is not guaranteed. So the invariants that actually matter — the ones where a violation means bad data, not a bad review comment — get restated at the point of use, not just at the start. Before a change touches a financial table, a scheduled job, or anything that mutates a balance, the agent is required to name the specific invariant the change must preserve and explain how the change preserves it, as a step, before writing the diff. Not as documentation after the fact — as a gate the work has to pass through.
+
+The value isn't the write-up itself; it's that stating an invariant explicitly is a different cognitive act than assuming it holds. An agent that has to say "this write must not bypass the append-only constraint on the ledger table" before touching the ledger table catches the case where its own planned change would do exactly that — the same way writing down your reasoning catches mistakes a human wouldn't have caught by just doing the thing. The check is cheap. The alternative — finding out three weeks later that a "quick fix" quietly started allowing in-place edits to a financial record — is not.
+
+## Protected files, not protected conventions
+
+Some parts of a codebase should not be edited by an agent at all, full stop, regardless of how reasonable the change looks in isolation: migration history, anything handling authentication or money movement directly, configuration that controls what environment code deploys to. The naive version of this is a comment or a note in a rules file saying "don't touch this" — which works until an agent decides the situation in front of it is the exception. The version that actually holds is making those paths structurally off-limits: excluded from the agent's write access, or requiring an explicit, separate human action to unlock, rather than being one polite request away from being edited like anything else.
+
+This is the same principle as the append-only enforcement pattern I've written about before: a rule that depends on every future action remembering to respect it isn't a rule, it's a hope. An agent (or a hurried human, six months from now, who never read the same context you did today) will eventually reach for the thing that's merely discouraged. Protection that depends on the file not being writable holds regardless of who's asking or how good their reasoning sounds in the moment.
+
+## Progress documentation as a forcing function
+
+The last piece is the least glamorous and the one that's easiest to skip: a living document, updated after every unit of work, that records what changed, why, and what's still open — not a changelog written for its own sake, but the actual mechanism that lets the next session (agent or human) pick up with real context instead of re-deriving it from a diff and a guess. Without it, every new session starts by re-reading the whole codebase to reconstruct decisions that were already made, and re-derives them slightly differently each time, which is its own quiet source of drift. With it, a change that seems locally reasonable but contradicts a decision made three sessions ago gets caught immediately, because the decision and its reasoning are written down where the next session will actually see them before acting.
+
+The discipline this requires is real: the document has to be updated every time, not when it's convenient, or it silently stops being trustworthy and everyone quietly stops relying on it — which is worse than never having built it, because by then decisions are being made against a document everyone still thinks is current.
+
+## What this doesn't solve
+
+None of this makes an agent's output correct by default, and treating it as if it does is its own failure mode. A pre-flight check is only as good as the invariant it names — an agent can state an invariant confidently and still be wrong about what the system actually guarantees, especially in a part of the codebase the documentation describes less precisely than it should. Protected files stop an agent from touching what's fenced off; they don't stop a bad change from landing in everything that isn't. And documentation only helps the people who actually read it before acting, which is a discipline problem, not a tooling one. The honest framing is that these guardrails shrink the space where a serious mistake can happen unnoticed — they don't remove the need for a human who understands the system to still be the one accountable for it.
+
+The general form, past AI agents specifically: any contributor that moves fast — a new hire, a contractor, a model — needs the safe path to be the only path that's easy to take, not the one that's merely documented as correct.
