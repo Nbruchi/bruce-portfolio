@@ -11,6 +11,80 @@ order: 1
 featured: true
 ---
 
-## Overview
+## The problem
 
-Full case study coming in build-plan feature 13 — client review required before publishing (see `context/profile-facts.md`).
+A restaurant running point of sale, inventory, and accounting as separate tools — a till, a stock spreadsheet, a bookkeeper's ledger reconciled at month-end — has no way to know in the moment whether its own numbers agree with each other. The businesses that moved onto this platform did so for one reason: they could not trace their money or their stock in whatever they had before, and by the time a discrepancy surfaced it was already weeks old and unrecoverable. Rwanda adds a second requirement on top of that: RRA VSDC (Rwanda's electronic invoicing system — every sale must be cryptographically signed and reported to the tax authority in real time) means a sale isn't finished when the till closes, it's finished when a receipt has been signed and reported, and a system that treats that as an afterthought risks a business's compliance standing on every transaction it processes. The actual difficulty wasn't point of sale, or inventory, or accounting, or tax integration in isolation — each of those is a solved problem on its own. It was that a single sale has to move stock, post a balanced journal entry, and produce a signed fiscal receipt as one operation, across three client apps (a web dashboard, a staff-facing mobile app, and the API underneath both) used concurrently by different roles in the same restaurant — and if any two of those three ever disagree, the business is back to exactly the problem it switched systems to solve.
+
+## What I built
+
+I'm the sole engineer — architecture, backend, web, and mobile — on a multi-tenant platform: 28 modules on one NestJS API, PostgreSQL through TypeORM, serving a Next.js web dashboard and an Expo staff app from the same contract. Multi-tenancy is enforced structurally rather than by convention: every table carries a tenant column, and every query is scoped from the tenant claim in the request's JWT rather than a parameter a client could tamper with, so one restaurant's data is unreachable from another tenant's session by construction, not by an application-level check a future change could quietly skip.
+
+The financial core is double-entry accounting — every transaction that touches money posts a balanced pair of debit and credit journal entries, checked and enforced by the accounting module rather than left to each call site to get right on its own. Payments come in through mobile money, card, and cash, and all three reconcile against the same ledger rather than sitting in a side table that has to be matched up by hand later. Inventory and accounting aren't separate systems kept in sync — a sale reduces stock and posts a journal entry in the same transaction, so a stock discrepancy and a revenue discrepancy can never happen independently of each other; if one shows up, both do, which turns debugging a data problem into something tractable instead of a guessing game.
+
+On top of that: procurement (purchase orders that receive into stock), payroll, and the real-time fiscal integration — each completed sale synchronously produces a signed receipt and reports it to the tax authority before the sale is considered closed, not as a background job that could leave a sale "done" in the app while still unreported to the authority. I built this alone against a live client, which meant every architectural call — including which of these modules to build in what order — was mine to make and defend directly to the person paying for it.
+
+Once the system had real usage behind it, I ran a full audit against it: rated every issue I found by severity and closed all 53, the categories that mattered most being tenant-isolation edge cases, points where the ledger could be mutated instead of only appended to, and timing issues in when revenue was recognized relative to when a sale actually completed. I treat "audited and remediated" as a deliverable in its own right here, not a footnote — a system handling other people's money and their tax compliance is only as trustworthy as the audit it's been put through.
+
+## Append-only financial records, and why the business bought them
+
+The reason these businesses switched is specific: in what they had before, a number could be quietly edited — a stock count corrected in place, a journal entry adjusted after the fact — and once that's possible, nobody can fully trust any number that isn't the one currently on screen. The fix isn't procedural, a rule to be careful; it's structural. Journal entries and stock movement records are insert-only — the TypeORM repositories for both have update and delete disabled at the repository layer, not just discouraged by app convention, so the invariant holds regardless of which module or which future feature writes to them.
+
+That forces every kind of correction to become a new entry rather than a changed one. If a stock count needs correcting, the movement log gets a new adjustment record explaining the difference, not an edit to the original release entry — the original stays exactly as it was recorded, wrong count and all, and the correction sits next to it, timestamped and attributable. Accounting works the same way: a mistaken journal entry is never edited, it's reversed with a matching offsetting entry that references the original, so the ledger always shows both what happened and that it was later corrected, instead of silently rewriting history to look like the mistake never occurred.
+
+The other half of the design is that nothing is ever a stored running total on its own — a stock quantity or an account balance at any point in time is the sum of every movement or journal line up to that timestamp, computed from the trail rather than cached and incremented. That's slower than a running counter, and I made that tradeoff deliberately: a cached total can drift from its own history through a missed update or a race, and once it drifts there's no way to tell from the number alone that it's wrong. A number reconstructed from an append-only trail can't drift from that trail, because it *is* that trail — and the moment a business owner asks why a report says what it says, the honest answer is always a specific list of entries you can point at, not "trust the number."
+
+## What I'd do differently
+
+Tenant isolation is enforced entirely at the application layer — the JWT scope and the query builder get it right, but the database itself doesn't know what a tenant is and would return cross-tenant rows to any query that forgot to scope them. It's worked, because I was disciplined about it and the audit specifically checked for it, but "disciplined and checked" is a weaker guarantee than "structurally impossible." I'd add PostgreSQL row-level security as a second, database-enforced layer from the start, so a tenant-scoping mistake in application code fails closed on its own instead of depending on a human catching it in review.
+
+## Screenshots
+
+<Figure
+  src="/work/rms/movement-logs.png"
+  alt="Stock movement log showing a chronological list of release entries for prepared items, each row recording the worker, timestamp, item, and quantity — the append-only trail every stock change writes to"
+  width={1918}
+  height={751}
+  caption="Stock movement log — the append-only trail behind every stock change"
+/>
+
+<Figure
+  src="/work/rms/reversal-lines.png"
+  alt="General ledger report showing an Accounts Receivable entry immediately followed by a reversing entry that restores the prior balance, rather than an edit to the original line"
+  width={1914}
+  height={736}
+  caption="A correction as a reversal, not an edit"
+/>
+
+<Figure
+  src="/work/rms/order-flows.png"
+  alt="Order management dashboard showing a filterable list of orders by status — pending, confirmed, preparing, ready, delivered — the operational surface the stock and accounting machinery sits beneath"
+  width={1894}
+  height={760}
+  caption="Order flow — the operational surface beneath the ledger"
+/>
+
+<Figure
+  src="/work/rms/signed-receipt-1.png"
+  alt="Invoice detail view with a fiscal compliance panel confirming the sale's receipt is signed and compliant, showing a receipt counter and verification QR code"
+  width={1918}
+  height={765}
+  caption="Fiscal compliance status on a completed sale — signed and reported in real time"
+/>
+
+<Figure
+  src="/work/rms/signed-receipt-2.png"
+  alt="A generated fiscal receipt in the format Rwanda's electronic invoicing system requires, showing signed receipt data and a verification QR code with fictional identifiers"
+  width={1918}
+  height={667}
+  caption="The signed receipt itself — fictional identifiers, real format"
+/>
+
+<MobileScreenshotFrame>
+  <Figure
+    src="/work/rms/waiter-order.jpeg"
+    alt="Mobile staff app order detail screen showing an order's table, payment method, status, and line items"
+    width={540}
+    height={1108}
+    caption="Order detail — staff mobile app, the third client on the same API"
+  />
+</MobileScreenshotFrame>
