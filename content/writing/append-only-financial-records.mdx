@@ -1,8 +1,32 @@
 ---
 title: "Why financial records should be append-only"
 description: "Reversal entries instead of edits, enforcing immutability at the ORM layer, one-way status transitions."
-date: "2026-07-29"
-draft: true
+date: "2026-08-03"
+draft: false
 ---
 
-Full post coming in build-plan feature 14.
+If a row in your database can be edited in place, then a query against it can only ever tell you what the row currently says — never what actually happened. Those sound like the same thing until a number is wrong and someone needs to know why. A mutable financial record answers "what is the balance." An append-only one answers "what is the balance, and here is the exact sequence of entries that produced it, including the mistake and the correction." The second answer is the only one worth having in a system where the numbers represent real money.
+
+## The invariant
+
+The rule is simple to state and easy to violate by accident: rows that represent a financial fact — a journal entry, a payment, a stock movement, an invoice line — are never updated and never deleted. Every write is an insert. If something needs to change, you don't change the row; you add a new row that says what changed. The original stays exactly as it was recorded, including if it was wrong, because "this was wrong" is itself a fact worth keeping.
+
+This isn't a preference for how history feels tidier — it's what makes reconciliation possible at all. A month-end close, an audit, a dispute over a specific transaction: all of them ask "walk me through how we got here," and a table that's been edited in place has already destroyed the answer to that question by the time anyone asks it.
+
+## Corrections are reversals, not edits
+
+The natural place this shows up is double-entry accounting, where the discipline already half-exists: every transaction posts a balanced debit and a balanced credit. Extending append-only to corrections is a small step from there — instead of editing a wrong entry, you post a second entry that reverses it (an offsetting debit and credit that net the original to zero) and, where it matters, a third entry with the correct values. The ledger ends up with three rows instead of one, and that's the point: anyone reading it later sees the mistake, sees when it was caught, and sees what replaced it, instead of a single row that quietly holds the "right" answer with no trace that it was ever wrong.
+
+The same idea applies outside accounting to anything with a quantity that changes over time — stock on hand, a subscription's status, a document's approval state. A stock count that needs correcting doesn't get its release entry edited; it gets a new adjustment entry explaining the delta. The current count is never a fact you store — it's a number you compute by summing the trail.
+
+## Enforcing it where a comment can't
+
+The failure mode I actually worry about isn't someone deciding to edit a financial row on purpose. It's someone reaching for `.update()` on the wrong entity six months into a codebase, in a hurry, without knowing the rule exists. A comment on the table definition doesn't stop that. What stops it is making the update path not exist for that entity in the first place — a repository or service layer that only exposes `create` and `find` for financial tables, with `update` and `delete` either absent from the type the rest of the codebase is handed, or overridden to throw. If the invariant depends on every future contributor remembering a convention, it isn't an invariant, it's a hope. If it depends on the code not compiling, it holds regardless of who's touching it or how much context they have.
+
+The same thinking applies to status fields. A status column that gets overwritten in place — `pending` becomes `paid` becomes `refunded` — loses the timestamps and the ordering of how it got there, and nothing stops a bug from writing `pending` back over `paid`. Modeling status as its own append-only history (a row per transition, each one recording the timestamp and what it moved from and to) makes a backward transition something you'd have to deliberately insert rather than something a stray write can cause by accident, and it gives you the full timeline for free instead of only the current snapshot.
+
+## What it costs
+
+None of this is free. A balance that's a sum over history instead of a stored column is more expensive to read, and that cost grows with the size of the trail — at some point you need a snapshot or a materialized read model to keep it fast, which is its own piece of design that a mutable running total never required. Storage grows without bound unless you have an explicit archival strategy, and "explicit" matters, because silently deleting old rows to save space is exactly the mutation you built the whole system to prevent. And append-only doesn't automatically give you correctness — it gives you a trail. If the code writing to that trail isn't also careful about not writing the same entry twice, you get an append-only pile of duplicates instead of an append-only record of the truth. The pattern earns its cost back the first time someone asks "why does this number look like that," and the honest answer is a list of rows instead of a shrug.
+
+The general form of the rule, past finance specifically: if a system needs to be trusted later more than it needs to be fast right now, don't store the current answer — store what happened, and compute the current answer from it every time.
